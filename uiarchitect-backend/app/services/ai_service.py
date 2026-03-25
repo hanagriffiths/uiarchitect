@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 import base64
+import imghdr
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -11,7 +12,8 @@ MODEL = 'gpt-4o-mini'
 
 async def generate_component_tree(
     image_contents: bytes,
-    language: str
+    language: str,
+    mimeType: str
 ):
     # convert to readable b64 str format for AI
     base64_image = base64.b64encode(image_contents).decode("utf-8")
@@ -96,7 +98,7 @@ async def generate_component_tree(
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
+                            "url": f"data:{mimeType};base64,{base64_image}"
                         }
                     }
                 ]

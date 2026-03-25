@@ -15,6 +15,7 @@ export default function Hero() {
 
     const [image, setImage] = useState<string | null>(null);
     const [selectedLang, setSelectedLang] = useState<string>(languages[0]);
+    const [mimeType, setMimeType] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
     const selectImage = async () => {
@@ -31,9 +32,11 @@ export default function Hero() {
             aspect: [4, 3],
             quality: 1,
         });
+        console.log(result)
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
+            setMimeType(result.assets[0].mimeType || null);
         };
     };
 
@@ -42,11 +45,19 @@ export default function Hero() {
 
         const formData = new FormData();
 
+        // work out extension (default to jpeg)
+        const ext =
+        mimeType === "image/png" ? "png" :
+        mimeType === "image/jpeg" ? "jpg" :
+        mimeType === "image/gif" ? "gif" :
+        "jpeg";
+
         image && formData.append("image", {
             uri: image,
-            name: "upload.jpg",
-            type: "image/jpeg",
+            name: `upload.${ext}`,
+            type: mimeType,
         } as any);
+        mimeType && formData.append("mimeType", mimeType);
         formData.append("language", selectedLang);
 
         try {

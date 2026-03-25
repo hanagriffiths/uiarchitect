@@ -8,13 +8,16 @@ router = APIRouter()
 @router.post("/generate")
 async def generate(
     image: UploadFile = File(...),
-    language: str = Form(...)
+    language: str = Form(...),
+    mimeType: str = Form(...),
 ):
-    if not image or language:
-        raise HTTPException(status_code=400, detail="Image and language is required")
+
+    if not image or not language or not mimeType:
+        print('no image detected')
+        raise HTTPException(status_code=400, detail="Image, language, and mimeType are required")
 
     contents = await image.read()
-    result = await generate_component_tree(contents, language)
+    result = await generate_component_tree(contents, language, mimeType)
 
     try:
         data = json.loads(result)
