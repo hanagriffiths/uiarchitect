@@ -1,10 +1,10 @@
 import os
 from openai import OpenAI
 import base64
+
 from dotenv import load_dotenv
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 MODEL = 'gpt-4o-mini'
@@ -13,6 +13,7 @@ async def generate_component_tree(
     image_contents: bytes,
     language: str
 ):
+    # convert to readable b64 str format for AI
     base64_image = base64.b64encode(image_contents).decode("utf-8")
 
     prompt = f"""
@@ -82,29 +83,25 @@ async def generate_component_tree(
     - Return ONLY valid JSON
     """
 
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}"
                         }
-                    ]
-                }
-            ]
-        )
+                    }
+                ]
+            }
+        ]
+    )
 
-        return response.choices[0].message.content
-    except Exception as e:
-        print("OPENAI ERROR:", e)
-        raise e
+    return response.choices[0].message.content

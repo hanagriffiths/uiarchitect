@@ -10,15 +10,14 @@ async def generate(
     image: UploadFile = File(...),
     language: str = Form(...)
 ):
-    if not image:
-        raise HTTPException(status_code=400, detail="Image is required")
+    if not image or language:
+        raise HTTPException(status_code=400, detail="Image and language is required")
 
     contents = await image.read()
     result = await generate_component_tree(contents, language)
 
     try:
         data = json.loads(result)
-        print(data)
 
         if "error" in data:
             return {

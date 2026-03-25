@@ -1,16 +1,18 @@
+// Body of landing page that allows users to select a UI image and programming language to generate the component tree
+
+import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { languages } from '@/constants/Languages';
-
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as ImagePicker from 'expo-image-picker';
 
 const BACKEND_URL = 'http://127.0.0.1:8000/api';
 
 export default function Hero() {
     const router = useRouter();
+
     const [image, setImage] = useState<string | null>(null);
     const [selectedLang, setSelectedLang] = useState<string>(languages[0]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -52,10 +54,9 @@ export default function Hero() {
                 method: "POST",
                 body: formData,
                 headers: {
-                    // "Content-Type": "multipart/form-data",
+                    "Content-Type": "multipart/form-data",
                 },
             });
-            console.log(res);
 
             const data = await res.json();
 
@@ -63,18 +64,23 @@ export default function Hero() {
                 const componentTree = data.data;
                 const language = data.language;
 
-                console.log(componentTree);
-
                 router.push({
                     pathname: "/component-tree",
                     params: { componentTree: JSON.stringify(componentTree), language: language }
                 });
             } else {
-                router.push({
-                    pathname: "/"
-                });
+                setImage(null);
+                if (!(data.error === "ParseError")) {
+                    Alert.alert('Incorrect image type', 'Please upload a UI image.');
+                    return;
+                } else {
+                    Alert.alert('Something went wrong', 'Please try again.');
+                    return;
+                }
             }
         } catch (err) {
+            setImage(null);
+            Alert.alert('Something went wrong', 'Please try again.');
             console.error('Something went wrong when fetching component tree.');
         } finally {
             setLoading(false);
@@ -83,14 +89,14 @@ export default function Hero() {
 
     return (
         <View className='relative min-h-screen w-screen pt-20 pb-8 items-center flex-col'>
-            <View className='h-fit w-full py-6 px-8 gap-4'>
-                {/* title */}
-                <Text className='w-full text-start text-2xl font-bold font-inter text-slate-50 pt-4 pb-2'>
+            <View className='w-full py-6 px-8 gap-4'>
+                {/* app name */}
+                <Text className='pt-4 pb-2 text-2xl font-inter text-slate-50'>
                     UI Architect
                 </Text>
 
-                {/* Heading */}
-                <Text className='w-full text-start pr-20 py-2 text-3xl font-interBoldItalic text-slate-300'>
+                {/* heading */}
+                <Text className='pr-20 py-2 text-3xl font-interBoldItalic text-slate-300'>
                     Turn UI screenshots into component architecture
                 </Text>
 
@@ -117,7 +123,7 @@ export default function Hero() {
 
                             {/* remove selected image button */}
                             <Pressable
-                                className='absolute top-2 right-2 w-fit h-fit'
+                                className='absolute top-2 right-2'
                                 onPress={() => setImage(null)}
                                 disabled={loading}
                             >
@@ -126,12 +132,13 @@ export default function Hero() {
                         </View>
 
                         <View className='flex-col gap-4 w-full'>
+                            {/* language select helper prompt */}
                             <Text className='font-interItalic text-slate-50'>
                                 Select a programming language:
                             </Text>
-                            {/* select programming language button */}
+
+                            {/* programming language select (disabled on loading) */}
                             <View className='flex-row bg-blue-100/10'>
-                                
                                 {languages.map((lang, idx) => (
                                     <View
                                         key={lang}
@@ -160,7 +167,7 @@ export default function Hero() {
                         </View>
                         
 
-                        {/* generate component architecture button */}
+                        {/* generate component architecture button (disabled on loading) */}
                         <Pressable
                             className='py-2 px-4 items-center justify-center rounded-md border border-slate-950/80 bg-slate-800'
                             onPress={generateArchitecture}

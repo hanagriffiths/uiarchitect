@@ -1,3 +1,5 @@
+// Landing page that sets a gradient/ grid background for the hero
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, View } from 'react-native';
 import { StyleSheet } from 'react-native';
