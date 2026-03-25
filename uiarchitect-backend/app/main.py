@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import example
+from app.routes import generate
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(example.router, prefix="/api")
+app.include_router(generate.router, prefix="/api")
 
 @app.get("/")
 def root():

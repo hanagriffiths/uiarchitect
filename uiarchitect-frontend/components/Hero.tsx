@@ -1,26 +1,19 @@
-import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { View, Text, Alert, Image, Pressable } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { languages } from '@/constants/Languages';
 
-import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+const BACKEND_URL = 'http://127.0.0.1:8000/api';
 
 export default function Hero() {
     const router = useRouter();
     const [image, setImage] = useState<string | null>(null);
     const [selectedLang, setSelectedLang] = useState<string>(languages[0]);
-
-    type formData = {
-    image: {
-        Components: string[];
-        Constants: string[];
-        Hooks: string[];
-    };
-    };
+    const [loading, setLoading] = useState<boolean>(false);
 
     const selectImage = async () => {
         const permissionRes = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -43,6 +36,8 @@ export default function Hero() {
     };
 
     const generateArchitecture = async() => {
+        setLoading(true);
+
         const formData = new FormData();
 
         image && formData.append("image", {
@@ -52,26 +47,42 @@ export default function Hero() {
         } as any);
         formData.append("language", selectedLang);
 
-        console.log(formData);
+        try {
+            const res = await fetch(`${BACKEND_URL}/generate`, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    // "Content-Type": "multipart/form-data",
+                },
+            });
+            console.log(res);
 
-        const componentTree = await fetch(`${BACKEND_URL}/generate`, {
-            method: "POST",
-            body: formData,
-            headers: {
-                // "Content-Type": "multipart/form-data",
-            },
-        });
+            const data = await res.json();
 
-        console.log(componentTree);
+            if (data.success) {
+                const componentTree = data.data;
+                const language = data.language;
 
-        router.push({
-            pathname: "/component-tree",
-            params: { componentTree: JSON.stringify(componentTree) }
-        });
+                console.log(componentTree);
+
+                router.push({
+                    pathname: "/component-tree",
+                    params: { componentTree: JSON.stringify(componentTree), language: language }
+                });
+            } else {
+                router.push({
+                    pathname: "/"
+                });
+            }
+        } catch (err) {
+            console.error('Something went wrong when fetching component tree.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <View className='min-h-screen w-screen pt-20 pb-8 items-center flex-col'>
+        <View className='relative min-h-screen w-screen pt-20 pb-8 items-center flex-col'>
             <View className='h-fit w-full py-6 px-8 gap-4'>
                 {/* title */}
                 <Text className='w-full text-start text-2xl font-bold font-inter text-slate-50 pt-4 pb-2'>
@@ -106,8 +117,9 @@ export default function Hero() {
 
                             {/* remove selected image button */}
                             <Pressable
-                                className='absolute z-50 top-2 right-2 w-fit h-fit'
+                                className='absolute top-2 right-2 w-fit h-fit'
                                 onPress={() => setImage(null)}
+                                disabled={loading}
                             >
                                 <Ionicons name="close-sharp" size={28} color="white" />
                             </Pressable>
@@ -130,10 +142,12 @@ export default function Hero() {
                                                 ${selectedLang === lang ? 'bg-blue-50/40 border border-slate-50/40' : ''}
                                             `}
                                             onPress={() => setSelectedLang(lang)}
+                                            disabled={loading}
                                         >
                                             <Text
                                                 className={`
                                                     font-inter text-base
+                                                    ${loading ? 'opacity-60' : ''}
                                                     ${selectedLang === lang ? 'text-slate-900' : 'text-slate-50'}
                                                 `}
                                             >
@@ -150,6 +164,7 @@ export default function Hero() {
                         <Pressable
                             className='py-2 px-4 items-center justify-center rounded-md border border-slate-950/80 bg-slate-800'
                             onPress={generateArchitecture}
+                            disabled={loading}
                         >
                             <Text className='text-lg text-slate-50'>
                                 Generate
@@ -162,6 +177,7 @@ export default function Hero() {
                     >
                         <Pressable
                             onPress={selectImage}
+                            disabled={loading}
                         >
                             <Text className='text-xl underline text-slate-50'>
                                 Upload an image
@@ -170,6 +186,16 @@ export default function Hero() {
                     </View>  
                 )}
             </View>
+
+            {/* loading state */}
+            {loading && (
+                <View
+                    className="h-screen w-screen absolute top-0 left-0 right-0 bottom-0 items-center justify-center"
+                    style={{ backgroundColor: '#f1f5f933', zIndex: 100, elevation: 100 }}
+                >
+                    <ActivityIndicator size="large" color="#f1f5f9" />
+                </View>
+            )}
         </View>
     );
 }
