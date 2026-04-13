@@ -70,7 +70,3 @@ Then open the app in Expo Go, an emulator/simulator, or the web target from the 
 **Frontend** (`uiarchitect-frontend/package.json`): `npm start`, `npm run android`, `npm run ios`, `npm run web`, `npm run lint`.
 
 **Backend**: run via `uvicorn` as shown above.
-
-## License
-
-Add a license file if you intend to open-source this project; none is included in the repo by default.
